@@ -28,7 +28,6 @@ void* messageForProducerThread(void* args)
 			{
 				printf("inside for loop (producer thread) iteration: %i\n", i);
 			}
-		
 			queue_add(maggie, Identify);
 	}
 	if (DEBUG==0)
@@ -37,9 +36,12 @@ void* messageForProducerThread(void* args)
 	}
 }
 
-void* consumerInit()
+void* consumerInit(void* args)
 {
 	printf("consumer thread inializer\n");
+	prod_cons_queue* q= (prod_cons_queue*) args;
+	int result = queue_remove(q);
+	printf("result is: %i \n", result);
 	//TODO
 	//needs to get the producer threads id somehow.
 	//printf(contents of message);
@@ -50,7 +52,16 @@ int main()
 {
 	printf("Program Start\n");
 	prod_cons_queue* queue;
+	holder queueHolder;
+
 	queue_initialize(queue);
+	queueHolder.queue=queue;
+
+	if(DEBUG==1)
+	{
+		printf("remaininelems: %i\n", queue->remaining_elements);
+	}
+
 	if(DEBUG==1)
 	{	
 		printf("left initalize\n");
@@ -62,8 +73,6 @@ int main()
 	{	
 		printf("threads created\n");
 	}
-	holder queueHolder;
-	queueHolder.queue=&queue;
 
 	if(DEBUG==1)
 	{		
