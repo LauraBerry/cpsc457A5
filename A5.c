@@ -23,7 +23,8 @@ void* messageForProducerThread(void* args)
 {
     printf("producer thread inializer\n");  
     // grab queue holder from args
-    producerStruct* queueAndId = (producerStruct*) args;
+	pthread_cond_t cond= PTHREAD_COND_INITIALIZER;    
+	producerStruct* queueAndId = (producerStruct*) args;
     
     // grab queue
     prod_cons_queue* maggie = queueAndId->queue;
@@ -46,6 +47,10 @@ void* messageForProducerThread(void* args)
             printf("inside for loop (producer thread) iteration: %i\n", i);
         }
         pthread_mutex_lock(&lock);
+		while(maggie->wait==1)
+		{
+			pthread_cond_wait(&cond, &lock);
+		}
         queue_add(maggie, Identify);
         pthread_mutex_unlock(&lock);
 		interator--;
@@ -53,7 +58,7 @@ void* messageForProducerThread(void* args)
     /* DEBUG*/
    for(int i=0;i<20;i++)
     {
-		if(currThread==3)
+		if(currThread<11)
 		{
         	printf("id: %i\t%i: %i\n", Identify, i, maggie->element[i]);
     	}
@@ -67,8 +72,7 @@ void* messageForProducerThread(void* args)
 
 void* consumerInit(void* args)
 {
-    printf("consumer thread inializer\n");
-    
+    printf("consumer thread inializer\n"); 
     // grab consStruct
     consumerStruct* consStruct = (consumerStruct*) args;
     
@@ -83,6 +87,12 @@ void* consumerInit(void* args)
     pthread_mutex_unlock(&lock);
     
     printf("result is: %i \n", result);
+	printf("consumer thread has been called:\n");
+	for(int i=0;i<20;i++)
+    {
+        	printf(" %i\n", q->element[i]);
+    } 
+    
 }
 
 
@@ -90,9 +100,10 @@ int main()
 {
     printf("Program Start\n");
 
-    // create locker
-    pthread_mutex_t* lock = PTHREAD_MUTEX_INITIALIZER;
 
+    pthread_mutex_t* lock = PTHREAD_MUTEX_INITIALIZER;
+	
+			//always lock and unlock with the SAME locker
     // initialize threads
     pthread_t producerThreads[10];
     pthread_t consumerThread[1];
@@ -111,10 +122,7 @@ int main()
 		printf("remaininelems: %i\n", queue->remaining_elements); 
     }*/
 
-    // initialize the holder for producer
-    producerStruct prodStruct;
-    prodStruct.queue=&queue;
-    prodStruct.locker=&lock;
+   
     
     if(DEBUG==1)
 	{
@@ -147,25 +155,27 @@ int main()
             printf("enter for loop (main): %i\n", k);
         }
         
-        // set the id
-        int* id= k+1;
-		currThread=k+1;        
-		prodStruct.id = id;
+		currThread=k+1; 
+		producerStruct prodStruct;
+		prodStruct.locker=&lock;
+		prodStruct.queue=&queue;
+		prodStruct.id = k+1;
         
         /// create the thread
         pthread_create(&producerThreads[k], NULL, messageForProducerThread, &prodStruct);
-        /*if(currThread<3)
-		{
-			printf("what went in: %i  what came out: %i\n", id, queue->element[interator]);
-		}*/
-        // join the thread
-        pthread_join(producerThreads[k], (void**)&result);
-    }    
+	}
+  
     printf("\n");
     
     // create and join the consumer thread
     pthread_create(&consumerThread[0], NULL, consumerInit, &consStruct);
-    pthread_join(consumerThread[0], (void**)&result);
+	//the consumer needs to indicate to the producers if they should sleep or wake up.
+	
+	for(int k=0;k<10;k++)
+	{
+        pthread_join(producerThreads[k], &result);
+    }  
+    pthread_join(consumerThread[0], &result);
 
     return 0;
 }

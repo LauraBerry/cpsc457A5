@@ -1,7 +1,7 @@
 #include<pthread.h>
 #include <stdint.h>
 
-#define MAX_QUEUE_SIZE 20
+#define MAX_QUEUE_SIZE 19
 
 typedef struct queue
 {
@@ -9,6 +9,8 @@ typedef struct queue
 	uint8_t head;
 	uint8_t tail;
 	uint8_t remaining_elements;
+	int current;
+	int wait;
 } prod_cons_queue;
 
 void queue_initialize(prod_cons_queue *q);
