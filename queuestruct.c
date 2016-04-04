@@ -11,106 +11,136 @@ void queue_initialize(prod_cons_queue *q)
     // initialize the queue 
 	for (int i=0; i<20; i++)
 	{		
-        if(DEBUG==0)
-        {
-            printf("for loop(queue inialize): %i \n", i);
-        }
-
-        q->element[i] = NULL;
+        q->element[i] = 0;
 	}
-    
-	if(DEBUG==0)
-	{
-    printf("exited for loop\n");
-    }
     
     // initialize head and tail
 	q->head = NULL;
 	q->tail = NULL;
-        
-    if(DEBUG==0)
-	{
-		printf("initialize head and tail\n");
-    }
 
     // initialize remaining_elements
 	q->remaining_elements=MAX_QUEUE_SIZE;
 	q->current=20;
 	q->wait=0;
-
 	pthread_cond_init(&q->cond, NULL); 
 }
 
-
-
-void queue_add(prod_cons_queue *q, int element)
+int checkerGreaterThan (int a, int b)
 {
-    //need to check if something is waiting in here.
-    // make the head position the end of the queue
-	q->head=19;
-    if(q->current>20)
+	if(a>b)
 	{
-		q->current=0;
+		a=b;
 	}
-    // make the tail position the index of the remaining element
-    q->tail=(q->current)-1;
-	if(q->tail>19)
+	return a;
+}
+int checker(int a, int b, int c)
+{
+	if(a>b||a<c)
 	{
-		q->tail=0;
+		a=c;
 	}
+	return a;
+}
 
-	/*DEBUG*/
-    printf("curent: %i\ttail:%i\telem:%i\n", q->current,q->tail,q->element[q->tail]);
-    
-    // check if the tail is within the array 
-	if((q->element[q->head])==NULL || (q->element[q->head])==-3)
+int checkerZero(int a, int b)
+{
+	if(a>b)
 	{
-        // put the id into that position
-		q->element[q->tail]= element;
-        
-        // make the remaining element the tail
-		q->remaining_elements=q->remaining_elements-1;
-		q->current=q->current-1;
-		if(q->remaining_elements>20)
-		{
-			q->remaining_elements=0;
-		}
+		return 0;
 	}
 	else
 	{
-		if(DEBUG==1)
-        {
-            printf("have reached the head of the queue (queue_add in queuestruct)\n");
-        }
-
-		q->wait=1;
-    } 
+		return a;
+	}
 }
+
+void queue_add(prod_cons_queue *q, int element)
+{
+    // make the head position the end of the queue
+	q->head=19;
+	q->current=checker(q->current, 20, 0);
+
+    // make the tail position the index of the remaining element
+    q->tail=(q->current)-1;
+	q->tail=checkerZero(q->tail,19);
+
+	if(q->element[q->tail]<1 ||q->element[q->tail]>10)
+	{
+		q->element[q->tail]=element;
+	}
+	/*DEBUG*/
+    printf("curent: %i\ttail:%i\telem:%i\n", q->current,q->tail,q->element[q->tail]);
+    // check if index is open to be filled
+	if((int)(q->element[q->tail])==0)
+	{
+
+		printf("added something\n");
+        // put the id into that position
+		q->element[q->tail]= element;
+        
+		//decrement remaining_elements and current
+		q->remaining_elements=q->remaining_elements-1;
+		q->current=q->current-1;
+
+		//ensure reamining elemenst is not <0
+		q->remaining_elements=checkerZero(q->remaining_elements,20);
+		
+	}
+	else
+	{
+		int added=0;
+		int i=q->tail;
+		while(added==0)
+		{
+			if(i<0||i>q->tail)
+			{
+				break;
+			}
+			if((int)(q->element[i])==0)
+			{
+				printf("added something out of order\n");
+				// put the id into that position
+				q->element[i]= element;
+				
+				//decrement remaining_elements and current
+				q->remaining_elements=q->remaining_elements-1;
+				q->current=q->current-1;
+
+				//ensure reamining elemenst is not <0
+				q->remaining_elements=checkerZero(q->remaining_elements,20);
+				added=1;
+			}
+			i--;
+		}		
+		if(added==0)
+		{
+    		printf("curent: %i\ttail:%i\telem:%i\n", q->current,q->tail,q->element[q->tail]);
+			if(DEBUG==1)
+		    {
+		        printf("have reached the head of the queue (queue_add in queuestruct)\n");
+		    }
+
+			q->wait=1;
+	    }
+	} 
+}
+
+
 
 int queue_remove(prod_cons_queue *q)
 {
-    if(DEBUG==1)
-    {
-        printf("head: %i\ttail: %i\tremain: %i\telem: %i\n", q->head, q->tail, q->remaining_elements, q->element[q->head]);
-    }
-    
-	if((q->element[q->head])!=NULL || (q->element[q->head])!=-3)
+	if((int)(q->element[q->head])!=0)
 	{		
         int value = q->element[q->head];
-        q->element[q->head]=-3;
+        q->element[q->head]=0;
         q->head=q->head - 1;
 		q->remaining_elements=q->remaining_elements+1;
 		q->current=q->head+2;
 		q->wait=0;
 		//somehow we have to prioritize certian threads.
-		if(q->remaining_elements>20)
-		{
-			q->remaining_elements=20;	
-		}
-		if(q->current>20)
-		{
-			q->current=20;
-		}
+		q->remaining_elements=checkerGreaterThan(q->remaining_elements,20);
+		q->current=checkerGreaterThan(q->current, 20);
+		
 		if (q->tail==0)
 		{
 			q->tail=19;
@@ -119,7 +149,14 @@ int queue_remove(prod_cons_queue *q)
 		{
 			q->tail=q->tail-1;
 		}
-		
+		q->tail=checkerGreaterThan(q->tail, 19);
+		q->head=checkerGreaterThan(q->head,19);
+	
+		if(DEBUG==1)
+		{
+		    printf("head: %i\ttail: %i\tremain: %i\telem: %i\n", q->head, q->tail, q->remaining_elements, q->element[q->head]);
+		}
+    
         return value;
 	}
 	else

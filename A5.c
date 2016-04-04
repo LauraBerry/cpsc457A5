@@ -82,22 +82,23 @@ void* consumerInit(void* args)
     
     // grab locker
     pthread_mutex_t* lock = consStruct->locker;
-
-    pthread_mutex_lock(&lock);
-    int result = queue_remove(q);
-	if(q->wait!=0)
+	for(int i=0; i<100; i++)
 	{
-		pthread_cond_signal(&q->cond);
-	} 
-   pthread_mutex_unlock(&lock);
-    
-    printf("result is: %i \n", result);
-	printf("consumer thread has been called:\n");
-	for(int i=0;i<20;i++)
-    {
-        	printf(" %i\n", q->element[i]);
-    } 
-    pthread_exit(NULL);
+		pthread_mutex_lock(&lock);
+		while(q->wait==0)
+		{
+			pthread_cond_signal(&q->cond);
+		}
+		int result = queue_remove(q);
+	   pthread_mutex_unlock(&lock);
+		printf("result is: %i \n", result);
+		printf("consumer thread has been called:\n");
+		for(int i=0;i<20;i++)
+		{
+		    	printf(" %i\n", q->element[i]);
+		} 
+	 }  
+	 pthread_exit(NULL);
 }
 
 
@@ -136,7 +137,11 @@ int main()
 	{
 		printf("result created\n");
 	}
-	
+	printf("queue before: \n");
+	for (int i=0; i<20; i++)
+	{
+		printf("%i:\t%i\n",i, consStruct.queue->element[i]);
+	}
     // loop through and create threads
     for (int k=0; k<10; k++)
     {
