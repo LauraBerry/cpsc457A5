@@ -27,7 +27,7 @@ void queue_initialize(prod_cons_queue *q)
 
 int checkerGreaterThan (int a, int b)
 {
-	if(a>b)
+	if((int)a>b)
 	{
 		a=b;
 	}
@@ -35,7 +35,7 @@ int checkerGreaterThan (int a, int b)
 }
 int checker(int a, int b, int c)
 {
-	if(a>b||a<c)
+	if((int)a>b||(int)a<c)
 	{
 		a=c;
 	}
@@ -44,7 +44,7 @@ int checker(int a, int b, int c)
 
 int checkerZero(int a, int b)
 {
-	if(a>b)
+	if((int)a>b)
 	{
 		return 0;
 	}
@@ -58,96 +58,78 @@ void queue_add(prod_cons_queue *q, int element)
 {
     // make the head position the end of the queue
 	q->head=19;
+    
 	q->current=checker(q->current, 20, 0);
 
     // make the tail position the index of the remaining element
-    q->tail=(q->current)-1;
-	q->tail=checkerZero(q->tail,19);
+    q->tail = (q->current)-1;
+    
+	q->tail = checkerZero(q->tail,19);
 
-	if(q->element[q->tail]<1 ||q->element[q->tail]>10)
+	if((int)q->element[q->tail]<1 ||(int)q->element[q->tail]>10)
 	{
 		q->element[q->tail]=element;
 	}
+    
 	/*DEBUG*/
     printf("curent: %i\ttail:%i\telem:%i\n", q->current,q->tail,q->element[q->tail]);
-    // check if index is open to be filled
-	if((int)(q->element[q->tail])==0)
-	{
-
-		printf("added something\n");
-        // put the id into that position
-		q->element[q->tail]= element;
+	int added=0;
         
-		//decrement remaining_elements and current
-		q->remaining_elements=q->remaining_elements-1;
-		q->current=q->current-1;
-
-		//ensure reamining elemenst is not <0
-		q->remaining_elements=checkerZero(q->remaining_elements,20);
-		
-	}
-	else
+	int i=q->tail;
+        
+	while(added==0)
 	{
-		int added=0;
-		int i=q->tail;
-		while(added==0)
+		if(i<0||i>(int)q->tail)
 		{
-			if(i<0||i>q->tail)
-			{
-				break;
-			}
-			if((int)(q->element[i])==0)
-			{
-				printf("added something out of order\n");
+			break;
+		}
+		if((int)(q->element[i])==0)
+		{
+			printf("added something\n");
+                
 				// put the id into that position
-				q->element[i]= element;
+			q->element[i]= element;
 				
 				//decrement remaining_elements and current
-				q->remaining_elements=q->remaining_elements-1;
-				q->current=q->current-1;
+			q->remaining_elements--;
+			q->current--;
 
 				//ensure reamining elemenst is not <0
-				q->remaining_elements=checkerZero(q->remaining_elements,20);
-				added=1;
-			}
-			i--;
-		}		
-		if(added==0)
-		{
-    		printf("curent: %i\ttail:%i\telem:%i\n", q->current,q->tail,q->element[q->tail]);
-			if(DEBUG==1)
-		    {
-		        printf("have reached the head of the queue (queue_add in queuestruct)\n");
-		    }
-
-			q->wait=1;
+			q->remaining_elements=checkerZero(q->remaining_elements,20);
+			added=1;
+		}
+		i--;
+	}		
+	if(added==0)
+	{
+		if(DEBUG==1)
+	    {
+	        printf("have reached the head of the queue (queue_add in queuestruct)\n");
 	    }
-	} 
+		q->wait=1;
+    } 
 }
-
-
 
 int queue_remove(prod_cons_queue *q)
 {
 	if((int)(q->element[q->head])!=0)
 	{		
-        int value = q->element[q->head];
         q->element[q->head]=0;
-        q->head=q->head - 1;
-		q->remaining_elements=q->remaining_elements+1;
+        q->head--;
+		q->remaining_elements++;
 		q->current=q->head+2;
 		q->wait=0;
 		//somehow we have to prioritize certian threads.
 		q->remaining_elements=checkerGreaterThan(q->remaining_elements,20);
 		q->current=checkerGreaterThan(q->current, 20);
 		
-		if (q->tail==0)
+		if ((int)q->tail==0)
 		{
 			q->tail=19;
 		}
 		else
 		{
-			q->tail=q->tail-1;
+			q->tail--;
 		}
 		q->tail=checkerGreaterThan(q->tail, 19);
 		q->head=checkerGreaterThan(q->head,19);
@@ -157,7 +139,7 @@ int queue_remove(prod_cons_queue *q)
 		    printf("head: %i\ttail: %i\tremain: %i\telem: %i\n", q->head, q->tail, q->remaining_elements, q->element[q->head]);
 		}
     
-        return value;
+        return q->element[q->head];
 	}
 	else
 	{

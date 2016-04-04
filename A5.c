@@ -3,9 +3,10 @@
 #include <stdint.h>
 #include "queuestruct.c"
 
-
 int interator=19;
+
 int currThread;
+
 typedef struct
 {
     prod_cons_queue* queue;
@@ -34,7 +35,7 @@ void* messageForProducerThread(void* args)
 
         
     // grab id
-    int Identify = queueAndId->id;
+    int Identify = (int) queueAndId->id;
     
     if(DEBUG==0)
 	{
@@ -42,7 +43,7 @@ void* messageForProducerThread(void* args)
 	} 
     for (int i=0; i<10; i++)
     {
-        pthread_mutex_lock(&lock);
+        pthread_mutex_lock(lock);
 		if(maggie->wait==1)
 		{
 			printf("\nthread #: %i is waiting...\n",currThread);
@@ -52,7 +53,8 @@ void* messageForProducerThread(void* args)
 			pthread_cond_wait(&maggie->cond, &lock);
 		}
         queue_add(maggie, Identify);
-        pthread_mutex_unlock(&lock);
+        // pthread_cond_signal(&maggie->cond);
+        pthread_mutex_unlock(lock);
 		interator--;
     }
     /* DEBUG*/
@@ -87,10 +89,12 @@ void* consumerInit(void* args)
 		pthread_mutex_lock(&lock);
 		while(q->wait==0)
 		{
-			pthread_cond_signal(&q->cond);
+            pthread_cond_signal(&q->cond);
+			// pthread_cond_wait(&q->cond,&lock);
 		}
 		int result = queue_remove(q);
-	   pthread_mutex_unlock(&lock);
+        // pthread_cond_signal(&q->cond);
+        pthread_mutex_unlock(&lock);
 		printf("result is: %i \n", result);
 		printf("consumer thread has been called:\n");
 		for(int i=0;i<20;i++)
@@ -106,10 +110,9 @@ int main()
 {
     printf("Program Start\n");
 
-
     pthread_mutex_t* lock = PTHREAD_MUTEX_INITIALIZER;
 	
-			//always lock and unlock with the SAME locker
+	//always lock and unlock with the SAME locker
     // initialize threads
     pthread_t producerThreads[10];
     pthread_t consumerThread[1];
@@ -118,11 +121,6 @@ int main()
     // initialize the queue
     prod_cons_queue* queue;
     queue_initialize(&queue);
-
-    /*if(DEBUG==1)
-	{
-		printf("remaininelems: %i\n", queue->remaining_elements); 
-    }*/
 
 
     // initialize the holder for consumer
