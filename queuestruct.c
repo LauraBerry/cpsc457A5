@@ -37,6 +37,8 @@ void queue_initialize(prod_cons_queue *q)
 	q->remaining_elements=MAX_QUEUE_SIZE;
 	q->current=20;
 	q->wait=0;
+
+	pthread_cond_init(&q->cond, NULL); 
 }
 
 
@@ -46,18 +48,22 @@ void queue_add(prod_cons_queue *q, int element)
     //need to check if something is waiting in here.
     // make the head position the end of the queue
 	q->head=19;
-    
+    if(q->current>20)
+	{
+		q->current=0;
+	}
     // make the tail position the index of the remaining element
     q->tail=(q->current)-1;
 	if(q->tail>19)
 	{
 		q->tail=0;
 	}
-    
 
+	/*DEBUG*/
+    printf("curent: %i\ttail:%i\telem:%i\n", q->current,q->tail,q->element[q->tail]);
     
     // check if the tail is within the array 
-	if((q->tail>=0)&&(q->tail<=19)&&((q->element[q->tail])<1 || (q->element[q->tail])>10)&&(q->current>0||q->current<20))
+	if((q->element[q->head])==NULL || (q->element[q->head])==-3)
 	{
         // put the id into that position
 		q->element[q->tail]= element;
@@ -69,18 +75,10 @@ void queue_add(prod_cons_queue *q, int element)
 		{
 			q->remaining_elements=0;
 		}
-		if(q->current>20)
-		{
-			q->current=0;
-		}
 	}
-           if(DEBUG==1)
-    {
-        printf("tail:%i\telem:%i\n", q->tail,q->element[q->tail]);
-    }
 	else
 	{
-		if(DEBUG==0)
+		if(DEBUG==1)
         {
             printf("have reached the head of the queue (queue_add in queuestruct)\n");
         }

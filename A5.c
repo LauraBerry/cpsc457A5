@@ -23,7 +23,7 @@ void* messageForProducerThread(void* args)
 {
     printf("producer thread inializer\n");  
     // grab queue holder from args
-	pthread_cond_t cond= PTHREAD_COND_INITIALIZER;    
+	   
 	producerStruct* queueAndId = (producerStruct*) args;
     
     // grab queue
@@ -42,14 +42,14 @@ void* messageForProducerThread(void* args)
 	} 
     for (int i=0; i<10; i++)
     {
-        if(DEBUG==0 && currThread<3)
-        {
-            printf("inside for loop (producer thread) iteration: %i\n", i);
-        }
         pthread_mutex_lock(&lock);
+		if(maggie->wait==1)
+		{
+			printf("\nthread #: %i is waiting...\n",currThread);
+		}
 		while(maggie->wait==1)
 		{
-			pthread_cond_wait(&cond, &lock);
+			pthread_cond_wait(&maggie->cond, &lock);
 		}
         queue_add(maggie, Identify);
         pthread_mutex_unlock(&lock);
@@ -68,6 +68,7 @@ void* messageForProducerThread(void* args)
     {
         printf("id: %i\n", Identify);
     }
+	pthread_exit(NULL);
 }
 
 void* consumerInit(void* args)
@@ -84,7 +85,11 @@ void* consumerInit(void* args)
 
     pthread_mutex_lock(&lock);
     int result = queue_remove(q);
-    pthread_mutex_unlock(&lock);
+	if(q->wait!=0)
+	{
+		pthread_cond_signal(&q->cond);
+	} 
+   pthread_mutex_unlock(&lock);
     
     printf("result is: %i \n", result);
 	printf("consumer thread has been called:\n");
@@ -92,7 +97,7 @@ void* consumerInit(void* args)
     {
         	printf(" %i\n", q->element[i]);
     } 
-    
+    pthread_exit(NULL);
 }
 
 
@@ -108,10 +113,6 @@ int main()
     pthread_t producerThreads[10];
     pthread_t consumerThread[1];
     
-    if(DEBUG==1)
-	{
-		printf("threads created\n");
-	}
     
     // initialize the queue
     prod_cons_queue* queue;
@@ -122,35 +123,24 @@ int main()
 		printf("remaininelems: %i\n", queue->remaining_elements); 
     }*/
 
-   
-    
-    if(DEBUG==1)
-	{
-		printf("prodStruct created\n");
-	}
 
     // initialize the holder for consumer
     consumerStruct consStruct;
     consStruct.queue=&queue;
     consStruct.locker=&lock;
-    
-    if(DEBUG==1)
-	{
-		printf("prodStruct created\n");
-	}
 
     // result placeholder
     void* result;
     
-    if(DEBUG==1)
+    if(DEBUG==0)
 	{
 		printf("result created\n");
 	}
-    
+	
     // loop through and create threads
     for (int k=0; k<10; k++)
     {
-        if(DEBUG==1)
+        if(DEBUG==0)
         {
             printf("enter for loop (main): %i\n", k);
         }
