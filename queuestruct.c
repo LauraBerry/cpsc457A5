@@ -85,16 +85,16 @@ void queue_add(prod_cons_queue *q, int element)
 		}
 		if((int)(q->element[i])==0)
 		{
-			printf("added something\n");
+			// printf("added something\n");
                 
-				// put the id into that position
+            // put the id into that position
 			q->element[i]= element;
 				
-				//decrement remaining_elements and current
+            //decrement remaining_elements and current
 			q->remaining_elements--;
 			q->current--;
 
-				//ensure reamining elemenst is not <0
+            //ensure reamining elemenst is not <0
 			q->remaining_elements=checkerZero(q->remaining_elements,20);
 			added=1;
 		}
