@@ -75,7 +75,7 @@ void queue_add(prod_cons_queue *q, int element)
     printf("curent: %i\ttail:%i\telem:%i\n", q->current,q->tail,q->element[q->tail]);
 	int added=0;
         
-	int i=q->tail;
+	int i=19;
         
 	while(added==0)
 	{
@@ -99,7 +99,8 @@ void queue_add(prod_cons_queue *q, int element)
 			added=1;
 		}
 		i--;
-	}		
+	}
+	q->current=q->tail+1;		
 	if(added==0)
 	{
 		if(DEBUG==1)
@@ -118,7 +119,6 @@ int queue_remove(prod_cons_queue *q)
         q->head--;
 		q->remaining_elements++;
 		q->current=q->head+2;
-		q->wait=0;
 		//somehow we have to prioritize certian threads.
 		q->remaining_elements=checkerGreaterThan(q->remaining_elements,20);
 		q->current=checkerGreaterThan(q->current, 20);
@@ -138,7 +138,7 @@ int queue_remove(prod_cons_queue *q)
 		{
 		    printf("head: %i\ttail: %i\tremain: %i\telem: %i\n", q->head, q->tail, q->remaining_elements, q->element[q->head]);
 		}
-    
+    	q->wait=0;
         return q->element[q->head];
 	}
 	else
