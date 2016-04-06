@@ -9,9 +9,9 @@ typedef struct queue
 	uint8_t head;
 	uint8_t tail;
 	uint8_t remaining_elements;
-	int current;
-	int wait;
-	pthread_cond_t cond; 
+    int wait;
+    pthread_cond_t cond1;
+    pthread_cond_t cond2;
 } prod_cons_queue;
 
 void queue_initialize(prod_cons_queue *q);
