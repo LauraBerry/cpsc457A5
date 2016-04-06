@@ -2,8 +2,10 @@
 #include <pthread.h>
 #include "queuestruct.h"
 
+// debugging purposes
 int DEBUG = 1;
 
+/* INIT */
 void queue_initialize(prod_cons_queue *q)
 {
 	printf("queue inializer\n"); 
@@ -29,7 +31,7 @@ void queue_initialize(prod_cons_queue *q)
     pthread_cond_init(&q->cond2, NULL);
 }
 
-// should not check if full
+/* ADD */
 void queue_add(prod_cons_queue *q, int element)
 {
 	// make head the element
@@ -48,7 +50,7 @@ void queue_add(prod_cons_queue *q, int element)
 	if(DEBUG==1) { printf("added %i\t(%i REMAINING, %i WAITING)\n", element, q->remaining_elements, q->wait); }
 }
 
-// should not check if empty
+/* REMOVE */
 int queue_remove(prod_cons_queue *q)
 {
     int data = 0;
