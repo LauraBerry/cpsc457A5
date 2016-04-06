@@ -12,6 +12,7 @@ typedef struct queue
 	int current;
 	int wait;
 	pthread_cond_t cond; 
+	int flag;
 } prod_cons_queue;
 
 void queue_initialize(prod_cons_queue *q);

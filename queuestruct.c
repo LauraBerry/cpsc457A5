@@ -2,11 +2,10 @@
 #include <pthread.h>
 #include "queuestruct.h"
 
-int DEBUG=1;
 
 void queue_initialize(prod_cons_queue *q)
 {
-	printf("queue inializer\n"); 
+	//printf("queue inializer\n"); 
  
     // initialize the queue 
 	for (int i=0; i<20; i++)
@@ -23,6 +22,7 @@ void queue_initialize(prod_cons_queue *q)
 	q->current=20;
 	q->wait=0;
 	pthread_cond_init(&q->cond, NULL); 
+	q->flag;
 }
 
 int checkerGreaterThan (int a, int b)
@@ -56,6 +56,7 @@ int checkerZero(int a, int b)
 
 void queue_add(prod_cons_queue *q, int element)
 {
+	q->flag=0;
     // make the head position the end of the queue
 	q->head=19;
     
@@ -72,7 +73,7 @@ void queue_add(prod_cons_queue *q, int element)
 	}
     
 	/*DEBUG*/
-    printf("curent: %i\ttail:%i\telem:%i\n", q->current,q->tail,q->element[q->tail]);
+    //printf("curent: %i\ttail:%i\telem:%i\n", q->current,q->tail,q->element[q->tail]);
 	int added=0;
         
 	int i=19;
@@ -103,16 +104,17 @@ void queue_add(prod_cons_queue *q, int element)
 	q->current=q->tail+1;		
 	if(added==0)
 	{
-		if(DEBUG==1)
+		/*if(DEBUG==1)
 	    {
 	        printf("have reached the head of the queue (queue_add in queuestruct)\n");
-	    }
+	    }*/
 		q->wait=1;
     } 
 }
 
 int queue_remove(prod_cons_queue *q)
 {
+	q->flag=0;
 	if((int)(q->element[q->head])!=0)
 	{		
         q->element[q->head]=0;
@@ -134,17 +136,17 @@ int queue_remove(prod_cons_queue *q)
 		q->tail=checkerGreaterThan(q->tail, 19);
 		q->head=checkerGreaterThan(q->head,19);
 	
-		if(DEBUG==1)
+		/*if(DEBUG==1)
 		{
 		    printf("head: %i\ttail: %i\tremain: %i\telem: %i\n", q->head, q->tail, q->remaining_elements, q->element[q->head]);
-		}
+		}*/
     	q->wait=0;
         return q->element[q->head];
 	}
 	else
 	{
-		printf("there isn't anything in the end of the array\n");
-		
-        return 0;
+		//printf("there isn't anything in the end of the array\n");
+		q->wait=0;
+        return -22;
 	}
 }
