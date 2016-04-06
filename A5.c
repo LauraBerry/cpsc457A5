@@ -8,7 +8,7 @@ typedef struct
 {
     prod_cons_queue* queue;
     pthread_mutex_t* locker;
-    int id;
+    int* id;
 } producerStruct;
 
 // consumer structure
@@ -33,18 +33,23 @@ void* producerInit(void* arg)
         //wait
 		if(prodStruct->queue->remaining_elements==0)
 		{
+            /* DEBUG */
+            printf("queue full");
+            
             prodStruct->queue->wait++;
             pthread_cond_wait(&prodStruct->queue->cond1, prodStruct->locker);
 		}
         
         // add element
-        queue_add(prodStruct->queue, prodStruct->id);
+        queue_add(prodStruct->queue, *prodStruct->id);
+        
+        pthread_cond_signal(&prodStruct->queue->cond2);
        
         /* DEBUG */
-	    for(int i=0; i<20;i++)
+	    /*for(int i=0; i<20;i++)
 	    {
 		    printf("%i: %i\n", i, prodStruct->queue->element[i]);
-	    }
+	    }*/
         
         // unlock
         pthread_mutex_unlock(prodStruct->locker);
@@ -66,7 +71,7 @@ void* consumerInit(void* args)
         
         if(consStruct->queue->remaining_elements == MAX_QUEUE_SIZE)
         {
-	printf("queue full\n"); 
+            printf("queue empty\n"); 
             pthread_cond_wait(&consStruct->queue->cond2, consStruct->locker);
         }
 		
@@ -76,6 +81,8 @@ void* consumerInit(void* args)
         // check if someone is waiting
         if(consStruct->queue->wait > 0)
         {
+            consStruct->queue->wait--;
+            
             // signal done
             pthread_cond_signal(&consStruct->queue->cond1);
         }
@@ -116,14 +123,16 @@ int main()
     // loop through and create threads
     for (int k=0; k<10; k++)
     {
+        int identity = k+1;
+        
         // initialize producer struct
 		producerStruct prodStruct;
 		prodStruct.queue = &queue;
 		prodStruct.locker = &lock;
-		prodStruct.id = k+1;
+		prodStruct.id = &identity;
         
 		/* DEBUG */
-		printf("id before: %i\n", prodStruct.id);
+		printf("id before: %i\n", *prodStruct.id);
        
         // create the thread
         pthread_create(&producerThreads[k], NULL, producerInit, &prodStruct);
@@ -150,11 +159,11 @@ int main()
     }  
     
 	/* DEBUG */
-	/*printf("final queue: \n");
+	printf("--------------\nfinal queue: \n");
 	for(int i=0; i<20;i++)
 	{
 		printf("%i: %i\n", i, queue.element[i]);
-	}*/
+	}
 	
     return 0;
 }

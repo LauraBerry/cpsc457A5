@@ -11,7 +11,7 @@ void queue_initialize(prod_cons_queue *q)
     // initialize the queue 
 	for (int i=0; i<20; i++)
 	{		
-        q->element[i] = -1;
+        q->element[i] = 0;
 	}
     
     // initialize head and tail
@@ -45,19 +45,19 @@ void queue_add(prod_cons_queue *q, int element)
     }
     
 	/* DEBUG */
-	printf("ADDED %i\n", element);
+	if(DEBUG==1) { printf("added %i\t(%i REMAINING, %i WAITING)\n", element, q->remaining_elements, q->wait); }
 }
 
 // should not check if empty
 int queue_remove(prod_cons_queue *q)
 {
-    int data = -1;
+    int data = 0;
     
 	// set data to the tail
 	data = q->element[q->tail];
 	
 	// reset the element
-	q->element[q->tail] = -1;
+	q->element[q->tail] = 0;
 	
 	// increment the tail circularly
 	q->tail = (q->tail + 1) % MAX_QUEUE_SIZE;
@@ -65,6 +65,9 @@ int queue_remove(prod_cons_queue *q)
 	// increment the remaining elements
 	q->remaining_elements++;
 
+    /* DEBUG */
+	if(DEBUG==1) { printf("removed %i\t(%i REMAINING, %i WAITING)\n", data, q->remaining_elements, q->wait); }
+    
 	// return what is in data
     return data;
 }
