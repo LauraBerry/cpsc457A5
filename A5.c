@@ -30,11 +30,11 @@ void* producerInit(void* arg)
         // lock
         pthread_mutex_lock(prodStruct->locker);
             
-        //wait
+        // wait if no elements to add
 		if(prodStruct->queue->remaining_elements==0)
 		{
             /* DEBUG */
-            printf("queue full");
+            printf("queue full\n");
             
             // increase number of waiting producers
             prodStruct->queue->wait++;
@@ -46,11 +46,11 @@ void* producerInit(void* arg)
         // add element
         queue_add(prodStruct->queue, *prodStruct->id);
         
-        // signal to the consumer
+        // signal to the consumer it's done
         pthread_cond_signal(&prodStruct->queue->cond2);
        
         /* DEBUG */
-        if(DEBUG==1)
+        if(DEBUG==0)
         {
             for(int i=0; i<20;i++)
             {
@@ -61,6 +61,10 @@ void* producerInit(void* arg)
         // unlock
         pthread_mutex_unlock(prodStruct->locker);
     }
+    
+    /* DEBUG */
+    printf("\tID passed in: %i\n", *prodStruct->id);
+    
 }
 
 /* CONSUMER THREAD METHOD */
@@ -141,7 +145,7 @@ int main()
 		prodStruct.id = &identity;
         
 		/* DEBUG */
-		printf("id before: %i\n", *prodStruct.id);
+		//printf("id before: %i\n", *prodStruct.id);
        
         // create the thread
         pthread_create(&producerThreads[k], NULL, producerInit, &prodStruct);
@@ -153,10 +157,10 @@ int main()
     // result placeholder
     void* result;
 
-    // join thread
+    // join the consumer thread
     pthread_join(consumerThread[0], &result);
 	
-    // join the threads
+    // join the producer threads
 	for(int j=0; j<10; j++)
 	{
         // result placeholder
