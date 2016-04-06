@@ -24,6 +24,8 @@ void queue_initialize(prod_cons_queue *q)
     q->wait = 0;
 
     // initialize remaining_elements
+	// remaining_elements is the number of elements
+	// left to add to the queue
 	q->remaining_elements = MAX_QUEUE_SIZE;
     
     // initialize conditions

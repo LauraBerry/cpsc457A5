@@ -3,30 +3,42 @@
 #include <stdint.h>
 #include "queuestruct.c"
 
-/* PRODUCER STRUCT */
+#define PRODUCERS_COUNT 10
+#define PRODUCER_ITERATIONS 10
+
+/***********************
+	PRODUCER STRUCT 
+************************/
 typedef struct
 {
     prod_cons_queue* queue;
     pthread_mutex_t* locker;
-    int* id;
+    int id;		// not a pointer			
 } producerStruct;
 
-/* CONSUMER STRUCT */
+/***********************
+	CONSUMER STRUCT 
+************************/
 typedef struct
 {
     prod_cons_queue* queue;
     pthread_mutex_t* locker;
 } consumerStruct;
 
-/* PRODUCER THREAD METHOD */
+/***********************
+	PRODUCER METHOD 
+************************/
 void* producerInit(void* arg)
 {
     // grab queue holder from args
 	producerStruct* prodStruct = (producerStruct*) arg;
-	
+
+	/* DEBUG */
+	printf("\tID passed in: %i\n", prodStruct->id);
+
     // loop through 10 times
-    for (int i=0; i<10; i++)
-    {
+    for (int i=0; i<PRODUCER_ITERATIONS; i++)
+    { 
         // lock
         pthread_mutex_lock(prodStruct->locker);
             
@@ -44,7 +56,7 @@ void* producerInit(void* arg)
 		}
         
         // add element
-        queue_add(prodStruct->queue, *prodStruct->id);
+        queue_add(prodStruct->queue, prodStruct->id);
         
         // signal to the consumer it's done
         pthread_cond_signal(&prodStruct->queue->cond2);
@@ -57,17 +69,14 @@ void* producerInit(void* arg)
                 printf("%i: %i\n", i, prodStruct->queue->element[i]);
             }
         }
-        
         // unlock
         pthread_mutex_unlock(prodStruct->locker);
     }
-    
-    /* DEBUG */
-    printf("\tID passed in: %i\n", *prodStruct->id);
-    
 }
 
-/* CONSUMER THREAD METHOD */
+/***********************
+	CONSUMER METHOD 
+************************/
 void* consumerInit(void* args)
 {
     printf("consumer thread inializer\n"); 
@@ -99,7 +108,7 @@ void* consumerInit(void* args)
             // decrease number of waiting producers
             consStruct->queue->wait--;
             
-            // signal done
+            // signal to producer that it is done
             pthread_cond_signal(&consStruct->queue->cond1);
         }
         
@@ -108,7 +117,9 @@ void* consumerInit(void* args)
     }
 }
 
-/* MAIN FUNCTION */
+/***********************
+	MAIN FUNCTION 
+************************/
 int main()
 {
     printf("Program Start\n");
@@ -121,7 +132,8 @@ int main()
     pthread_cond_t cond2 = PTHREAD_COND_INITIALIZER;
     
     // initialize threads
-    pthread_t producerThreads[10];
+    pthread_t producerThreads[PRODUCERS_COUNT];
+    producerStruct producerThreadsArgs[PRODUCERS_COUNT];
     pthread_t consumerThread[1];
     
     // initialize the queue
@@ -133,22 +145,23 @@ int main()
     consStruct.queue = &queue;
     consStruct.locker = &lock;
         
-    // loop through and create threads
-    for (int k=0; k<10; k++)
+    // loop through and create threads args
+	for (int k=0; k<PRODUCERS_COUNT; k++)
     {
-        int identity = k+1;
-        
-        // initialize producer struct
-		producerStruct prodStruct;
-		prodStruct.queue = &queue;
-		prodStruct.locker = &lock;
-		prodStruct.id = &identity;
-        
+		// initialize producer struct
+		producerThreadsArgs[k].queue = &queue;
+		producerThreadsArgs[k].locker = &lock;
+		producerThreadsArgs[k].id = k + 1;		// passed actual value in
+	}
+	
+    // loop through and create threads
+    for (int k=0; k<PRODUCERS_COUNT; k++)
+    {
 		/* DEBUG */
-		//printf("id before: %i\n", *prodStruct.id);
+		//printf("ID before: %i\n", prodStruct.id);
        
         // create the thread
-        pthread_create(&producerThreads[k], NULL, producerInit, &prodStruct);
+        pthread_create(&producerThreads[k], NULL, producerInit, &producerThreadsArgs[k]);
     }
     
     // create and join the consumer thread
@@ -161,7 +174,7 @@ int main()
     pthread_join(consumerThread[0], &result);
 	
     // join the producer threads
-	for(int j=0; j<10; j++)
+	for(int j=0; j<PRODUCERS_COUNT; j++)
 	{
         // result placeholder
         void* result;
